@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+
+# Generated charts (transient run outputs), but DO commit the report assets.
+*.png
+!docs/assets/
+!docs/assets/*.png
+
+# Local Claude Code settings (keep CLAUDE.md tracked)
+.claude/settings.local.json

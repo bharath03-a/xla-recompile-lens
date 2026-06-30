@@ -1,0 +1,59 @@
+[project]
+name = "xla-recompile-lens"
+version = "0.1.0"
+description = "Classify XLA recompilations by root cause and prove the fix with measured before/after numbers."
+readme = "README.md"
+authors = [
+    { name = "Bharath Velamala", email = "bharathvelamala1929@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    # Core graph analysis works on plain PyTorch (CPU) — no TPU needed.
+    "torch>=2.4",
+]
+
+[project.optional-dependencies]
+# torch_xla only installs on Linux/TPU (e.g. Colab). Kept optional so the
+# package installs and the static analysis runs on a Mac/CPU dev box.
+tpu = ["torch_xla>=2.4"]
+# Charts for the before/after report.
+viz = ["matplotlib>=3.8"]
+# The LLM serving benchmark (real model + real dataset). Heavy; opt-in.
+bench = ["transformers>=4.44", "datasets>=2.20", "numpy>=1.26"]
+
+[project.scripts]
+xla-recompile-lens = "xla_recompile_lens.cli:main"
+
+[dependency-groups]
+# uv's modern replacement for dev-only requirements. Installed with `uv sync`,
+# excluded from published wheels.
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+# Notebooks are demo material; lint the library and experiments, not the .ipynb.
+extend-exclude = ["*.ipynb"]
+
+[tool.ruff.lint]
+# A sensible research-grade default: pycodestyle, pyflakes, isort, bugbear,
+# comprehensions, pyupgrade.
+select = ["E", "F", "I", "B", "C4", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"
+# fusion_bench is a repo-root research package (sibling to the installed lib);
+# put the repo root on the path so tests can import it.
+pythonpath = ["."]
+markers = [
+    "unit: fast, isolated unit tests (run anywhere, no TPU)",
+    "integration: tests requiring torch_xla / a TPU runtime",
+]
