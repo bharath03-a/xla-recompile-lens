@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: lint + test (CPU)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync dependencies
+        run: uv sync --extra viz --extra bench
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Tests (pytest)
+        run: uv run pytest
+
+      # Smoke-test the CPU demos so the headline examples can never silently
+      # break. None of these need a TPU.
+      - name: Smoke — core idea
+        run: uv run python examples/see_it_work.py
+
+      - name: Smoke — plugin (recompile drop)
+        run: uv run python examples/plugin_demo.py
+
+      - name: Smoke — fusion_bench
+        run: uv run python -m fusion_bench.demo
+
+      - name: Smoke — CLI
+        run: uv run xla-recompile-lens --demo
+
+      - name: Smoke — serving benchmark (tiny model, CPU)
+        run: uv run python -m benchmarks.llm_prefill_serving --dry-run
